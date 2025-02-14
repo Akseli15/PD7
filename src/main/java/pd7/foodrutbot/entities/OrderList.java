@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Getter
@@ -23,8 +24,8 @@ public class OrderList {
     @Column(name = "order_number", nullable = false, length = 10, unique = true)
     private String orderNumber;
 
-    @Column(name = "menu_items", columnDefinition = "json", nullable = false)
-    private String menuItems;
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OrderItem> items;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)

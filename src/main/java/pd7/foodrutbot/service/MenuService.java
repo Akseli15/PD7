@@ -25,9 +25,11 @@ public class MenuService {
         if (existingMenuItem.isPresent()) {
             MenuItems menuItem = existingMenuItem.get();
             menuItem.setName(updatedMenuItem.getName());
+            menuItem.setCategory(updatedMenuItem.getCategory());
             menuItem.setPrice(updatedMenuItem.getPrice());
             menuItem.setAvailable(updatedMenuItem.getAvailable());
             menuItem.setStock(updatedMenuItem.getStock());
+            menuItem.setImageUrl(updatedMenuItem.getImageUrl());
             return menuItemsRepository.save(menuItem);
         }
         throw new RuntimeException("Menu item not found with id: " + id);

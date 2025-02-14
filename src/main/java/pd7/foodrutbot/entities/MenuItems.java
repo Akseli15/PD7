@@ -20,8 +20,9 @@ public class MenuItems {
     @Column(name = "name", nullable = false, length = 100)
     private String name;
 
-    @Column(name = "category", columnDefinition = "TEXT")
-    private String category;
+    @ManyToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "category_id", referencedColumnName = "id", nullable = false)
+    private Category category;
 
     @Column(name = "price", nullable = false, precision = 10, scale = 2)
     private BigDecimal price;

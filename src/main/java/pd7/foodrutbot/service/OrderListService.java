@@ -2,14 +2,18 @@ package pd7.foodrutbot.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import pd7.foodrutbot.entities.OrderItem;
 import pd7.foodrutbot.entities.OrderList;
+import pd7.foodrutbot.repositories.OrderItemRepository;
 import pd7.foodrutbot.repositories.OrderListRepository;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class OrderListService {
@@ -17,20 +21,35 @@ public class OrderListService {
     @Autowired
     private OrderListRepository orderListRepository;
 
+    @Autowired
+    private OrderItemRepository orderItemRepository;
+
     public List<OrderList> getAllOrderList() {
         return orderListRepository.findAll();
     }
 
     // Создание нового заказа
-    public OrderList createOrder(String orderNumber, String menuItemsJson, String chatId) {
+    @Transactional
+    public OrderList createOrder(String orderNumber, List<OrderItem> orderItems, String chatId) {
+        // Создаем новый заказ
         OrderList orderList = new OrderList();
         orderList.setOrderNumber(orderNumber);
-        orderList.setMenuItems(menuItemsJson);
         orderList.setStatus(OrderList.OrderStatus.ЗАКАЗ_В_ОЧЕРЕДИ);
         orderList.setCreatedAt(LocalDateTime.now());
         orderList.setChatId(chatId);
-        return orderListRepository.save(orderList);
+
+        // Сохраняем заказ в базе
+        OrderList savedOrder = orderListRepository.save(orderList);
+
+        // Привязываем позиции заказа к заказу и сохраняем их
+        for (OrderItem item : orderItems) {
+            item.setOrder(savedOrder);
+            orderItemRepository.save(item);
+        }
+
+        return savedOrder;
     }
+
 
     // Получить заказ по номеру
     public Optional<OrderList> getOrderByNumber(String orderNumber) {
@@ -69,25 +88,15 @@ public class OrderListService {
         // Получаем дату 7 дней назад
         LocalDateTime oneWeekAgo = LocalDateTime.now().minus(1, ChronoUnit.WEEKS);
 
-        // Получаем все заказы, сделанные за последнюю неделю
-        List<OrderList> orders = orderListRepository.findByCreatedAtAfter(oneWeekAgo);
+        // Получаем все заказанные позиции за последнюю неделю
+        List<OrderItem> orderItems = orderItemRepository.findByOrderCreatedAtAfter(oneWeekAgo);
 
-        Map<String, Integer> dishSales = new HashMap<>();  // Карта для хранения количества продаж по блюду
-
-        // Обрабатываем каждый заказ
-        for (OrderList order : orders) {
-            // Парсим меню из JSON
-            List<Map<String, Object>> menuItems = parseMenuItemsJson(order.getMenuItems());
-
-            // Для каждого блюда в заказе увеличиваем количество продаж
-            for (Map<String, Object> item : menuItems) {
-                String menuItemName = (String) item.get("menuItemName");
-                Integer quantity = (Integer) item.get("quantity");
-
-                // Увеличиваем количество заказанных блюд
-                dishSales.put(menuItemName, dishSales.getOrDefault(menuItemName, 0) + quantity);
-            }
-        }
+        // Группируем данные по названию блюда и суммируем количество продаж
+        Map<String, Integer> dishSales = orderItems.stream()
+                .collect(Collectors.groupingBy(
+                        item -> item.getMenuItem().getName(),
+                        Collectors.summingInt(OrderItem::getQuantity)
+                ));
 
         // Формируем результат в виде нужного формата
         Map<String, Object> result = new HashMap<>();

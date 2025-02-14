@@ -4,11 +4,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import pd7.foodrutbot.entities.MenuItems;
+import pd7.foodrutbot.entities.OrderItem;
 import pd7.foodrutbot.entities.OrderList;
+import pd7.foodrutbot.repositories.MenuItemsRepository;
 import pd7.foodrutbot.service.MenuService;
 import pd7.foodrutbot.service.OrderListService;
 import pd7.foodrutbot.service.TelegramBot;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -23,6 +26,9 @@ public class PageController {
 
     @Autowired
     private OrderListService orderListService;
+
+    @Autowired
+    private MenuItemsRepository menuItemsRepository;
 
     @Autowired
     private TelegramBot telegramBot;
@@ -111,13 +117,32 @@ public class PageController {
         return ResponseEntity.ok(availableItems);
     }
 
-    // Создать заказ
     @PostMapping("/order")
-    public ResponseEntity<OrderList> createOrder(@RequestBody Map<String, String> request) {
-        String orderNumber = request.get("orderNumber");
-        String menuItemsJson = request.get("menuItemsJson");
-        String chatId = request.get("chatId");
-        OrderList newOrder = orderListService.createOrder(orderNumber, menuItemsJson, chatId);
+    public ResponseEntity<OrderList> createOrder(@RequestBody Map<String, Object> request) {
+        String orderNumber = (String) request.get("orderNumber");
+        String chatId = (String) request.get("chatId");
+
+        // Получаем список товаров из запроса
+        List<Map<String, Object>> itemsList = (List<Map<String, Object>>) request.get("orderItems");
+        List<OrderItem> orderItems = new ArrayList<>();
+
+        for (Map<String, Object> itemData : itemsList) {
+            Integer menuItemId = (Integer) itemData.get("menuItemId");
+            Integer quantity = (Integer) itemData.get("quantity");
+
+            // Находим MenuItem в базе данных
+            MenuItems menuItem = menuItemsRepository.findById(menuItemId)
+                    .orElseThrow(() -> new RuntimeException("Товар с ID " + menuItemId + " не найден"));
+
+            // Создаем OrderItem
+            OrderItem item = new OrderItem();
+            item.setMenuItem(menuItem);
+            item.setQuantity(quantity);
+            orderItems.add(item);
+        }
+
+        // Создаем заказ с товарами
+        OrderList newOrder = orderListService.createOrder(orderNumber, orderItems, chatId);
         return ResponseEntity.ok(newOrder);
     }
 
