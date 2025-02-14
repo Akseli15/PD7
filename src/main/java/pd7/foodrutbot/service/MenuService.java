@@ -1,5 +1,6 @@
 package pd7.foodrutbot.service;
 
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import pd7.foodrutbot.entities.MenuItems;
@@ -21,19 +22,22 @@ public class MenuService {
 
     // Обновление существующего блюда
     public MenuItems updateMenuItem(Integer id, MenuItems updatedMenuItem) {
-        Optional<MenuItems> existingMenuItem = menuItemsRepository.findById(id);
-        if (existingMenuItem.isPresent()) {
-            MenuItems menuItem = existingMenuItem.get();
-            menuItem.setName(updatedMenuItem.getName());
-            menuItem.setCategory(updatedMenuItem.getCategory());
-            menuItem.setPrice(updatedMenuItem.getPrice());
-            menuItem.setAvailable(updatedMenuItem.getAvailable());
-            menuItem.setStock(updatedMenuItem.getStock());
-            menuItem.setImageUrl(updatedMenuItem.getImageUrl());
-            return menuItemsRepository.save(menuItem);
+        Optional<MenuItems> existingMenuItemOpt = menuItemsRepository.findById(id);
+        if (existingMenuItemOpt.isPresent()) {
+            MenuItems existingMenuItem = existingMenuItemOpt.get();
+            existingMenuItem.setName(updatedMenuItem.getName());
+            existingMenuItem.setCategory(updatedMenuItem.getCategory());
+            existingMenuItem.setPrice(updatedMenuItem.getPrice());
+            existingMenuItem.setAvailable(updatedMenuItem.getAvailable());
+            existingMenuItem.setStock(updatedMenuItem.getStock());
+            existingMenuItem.setImageUrl(updatedMenuItem.getImageUrl());
+
+            return menuItemsRepository.save(existingMenuItem);
+        } else {
+            throw new EntityNotFoundException("MenuItem with id " + id + " not found");
         }
-        throw new RuntimeException("Menu item not found with id: " + id);
     }
+
 
     // Удаление блюда по id
     public void deleteMenuItem(Integer id) {

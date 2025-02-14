@@ -21,8 +21,10 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import pd7.foodrutbot.config.BotConfig;
 import pd7.foodrutbot.entities.MenuItems;
+import pd7.foodrutbot.entities.OrderItem;
 import pd7.foodrutbot.entities.OrderList;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -183,41 +185,35 @@ public class TelegramBot extends TelegramLongPollingBot {
         if (orders != null && !orders.isEmpty()) {
             StringBuilder ordersText = new StringBuilder();
 
+            // Фильтруем заказы с текущим статусом "в очереди"
             orders = orders.stream()
                     .filter(order -> order.getStatus() == OrderList.OrderStatus.ЗАКАЗ_В_ОЧЕРЕДИ)
                     .collect(Collectors.toList());
-
 
             if (orders.isEmpty()) {
                 text = "У вас нет текущих заказов в очереди.";
             } else {
                 for (OrderList order : orders) {
-                    String menuItemsJson = order.getMenuItems();
-                    ObjectMapper objectMapper = new ObjectMapper();
-                    try {
-                        JsonNode menuItemsArray = objectMapper.readTree(menuItemsJson);
+                    ordersText.append("Заказ № ").append(order.getOrderNumber())
+                            .append("\nСтатус: ").append(order.getStatus()).append("\n\n");
 
-                        ordersText.append("Статус: ").append(order.getStatus()).append("\n\n");
+                    // Перебираем элементы заказа (OrderItem)
+                    for (OrderItem orderItem : order.getItems()) {
+                        MenuItems menuItem = orderItem.getMenuItem();
+                        int quantity = orderItem.getQuantity();
 
-                        for (JsonNode menuItemNode : menuItemsArray) {
-                            Integer itemId = Integer.valueOf(String.valueOf(menuItemNode.get("id")));
-                            int quantity = menuItemNode.get("quantity").asInt();
-
-                            MenuItems menuItem = menuService.getMenuItemById(itemId);
-                            if (menuItem != null) {
-                                ordersText.append(menuItem.getName()).append(" ")
-                                        .append(quantity).append(" шт.")
-                                        .append("\n");
-                            } else {
-                                ordersText.append("Блюдо с ID ").append(itemId).append(" не найдено.\n");
-                            }
+                        if (menuItem != null) {
+                            ordersText.append(menuItem.getName()).append(" ")
+                                    .append(quantity).append(" шт. - ")
+                                    .append(menuItem.getPrice().multiply(BigDecimal.valueOf(quantity)))
+                                    .append(" руб.\n");
+                        } else {
+                            ordersText.append("Блюдо с ID ").append(orderItem.getMenuItem().getId())
+                                    .append(" не найдено.\n");
                         }
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        ordersText.append("Ошибка при обработке данных заказа.\n");
                     }
+                    ordersText.append("\n");
                 }
-
 
                 text = ordersText.toString();
             }
@@ -228,6 +224,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         // Отправляем сообщение
         prepareAndSendMessage(chatId, text);
     }
+
 
     private void howToPass(long chatId) {
         String text = "До кафе «Аквариум» можно попасть с двух КПП:\n\n" +
