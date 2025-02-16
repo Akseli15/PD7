@@ -34,7 +34,7 @@ public class OrderListService {
         // Создаем новый заказ
         OrderList orderList = new OrderList();
         orderList.setOrderNumber(orderNumber);
-        orderList.setStatus(OrderList.OrderStatus.ЗАКАЗ_В_ОЧЕРЕДИ);
+        orderList.setStatus(OrderList.OrderStatus.ЗАКАЗ_ГОТОВИТСЯ);
         orderList.setCreatedAt(LocalDateTime.now());
         orderList.setChatId(chatId);
 

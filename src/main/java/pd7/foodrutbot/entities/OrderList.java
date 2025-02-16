@@ -37,8 +37,10 @@ public class OrderList {
     private LocalDateTime createdAt;
 
     public enum OrderStatus {
-        ЗАКАЗ_В_ОЧЕРЕДИ("Заказ в очереди"),
-        ВЫДАН("Выдан");
+        ЗАКАЗ_ВЫДАН("Заказ выдан"),
+        ЗАКАЗ_ГОТОВИТСЯ("Заказ готовится"),
+        ГОТОВ_К_ВЫДАЧЕ("Готов к выдаче"),
+        ВРЕМЯ_ВЫДАЧИ_ВЫШЛО("Время выдачи вышло");
 
         private final String status;
 

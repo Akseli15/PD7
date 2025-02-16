@@ -10,6 +10,7 @@ import pd7.foodrutbot.entities.OrderItem;
 import pd7.foodrutbot.entities.OrderList;
 import pd7.foodrutbot.repositories.CategoryRepository;
 import pd7.foodrutbot.repositories.MenuItemsRepository;
+import pd7.foodrutbot.repositories.OrderListRepository;
 import pd7.foodrutbot.service.MenuService;
 import pd7.foodrutbot.service.OrderListService;
 import pd7.foodrutbot.service.TelegramBot;
@@ -38,11 +39,14 @@ public class PageController {
     private CategoryRepository categoryRepository;
 
     @Autowired
+    private OrderListRepository orderListRepository;
+
+    @Autowired
     private TelegramBot telegramBot;
 
     //Общие контроллеры
 
-    // Получить все блюда
+    // Получить все блюдаx
     @GetMapping("/menu/all")
     public ResponseEntity<List<MenuItems>> getAllMenuItems() {
         List<MenuItems> availableItems = menuService.getAllMenuItems();
@@ -183,5 +187,24 @@ public class PageController {
         Optional<OrderList> order = orderListService.getOrderByNumber(orderNumber);
         return order.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
-    
+
+    //Изменение статуса заказа
+    @PutMapping("/order/{id}/status")
+    public ResponseEntity<String> updateOrderStatus(@PathVariable Integer id, @RequestParam OrderList.OrderStatus status) {
+        Optional<OrderList> orderOptional = orderListRepository.findById(id);
+        if (orderOptional.isPresent()) {
+            OrderList order = orderOptional.get();
+            order.setStatus(status);
+            orderListRepository.save(order);
+            return ResponseEntity.ok("Статус заказа обновлён на: " + status);
+        } else {
+            return ResponseEntity.badRequest().body("Заказ с ID " + id + " не найден");
+        }
+    }
+
+    @GetMapping("order/by-status")
+    public ResponseEntity<List<OrderList>> getOrdersByStatus(@RequestParam OrderList.OrderStatus status) {
+        List<OrderList> orders = orderListRepository.findByStatus(status);
+        return ResponseEntity.ok(orders);
+    }
 }

@@ -187,7 +187,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             // Фильтруем заказы с текущим статусом "в очереди"
             orders = orders.stream()
-                    .filter(order -> order.getStatus() == OrderList.OrderStatus.ЗАКАЗ_В_ОЧЕРЕДИ)
+                    .filter(order -> order.getStatus() == OrderList.OrderStatus.ЗАКАЗ_ГОТОВИТСЯ)
                     .collect(Collectors.toList());
 
             if (orders.isEmpty()) {
