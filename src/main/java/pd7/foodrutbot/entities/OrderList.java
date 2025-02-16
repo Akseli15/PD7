@@ -25,8 +25,7 @@ public class OrderList {
     @Column(name = "order_number", nullable = false, length = 10, unique = true)
     private String orderNumber;
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonManagedReference
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> items;
 
     @Enumerated(EnumType.STRING)

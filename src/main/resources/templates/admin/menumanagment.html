@@ -20,11 +20,11 @@
 </head>
 <body>
     <div id="sidebar">
-        <h4>АКВ<span class="custom-image"><img src="../images/fish.svg"></span>РИУМ</h4>
+        <h4>АКВАРИУМ</h4>
         <ul class="nav flex-column">
-            <li class="nav-item"><a href="#" class="nav-link text-white" onclick="showTab('products')" style="font-size: 21px; font-weight: 200">Товары</a></li>
-            <li class="nav-item"><a href="#" class="nav-link text-white" onclick="showTab('orders')" style="font-size: 21px; font-weight: 200">Заказы</a></li>
-            <li class="nav-item"><a href="#" class="nav-link text-white" onclick="showTab('stats')" style="font-size: 21px; font-weight: 200">Статистика</a></li>
+            <li class="nav-item"><a href="#" class="nav-link text-white" onclick="showTab('products')" style="font-size: 21px; text-align: center; font-weight: 200">Товары</a></li>
+            <li class="nav-item"><a href="#" class="nav-link text-white" onclick="showTab('orders')" style="font-size: 21px; text-align: center; font-weight: 200">Заказы</a></li>
+            <li class="nav-item"><a href="#" class="nav-link text-white" onclick="showTab('stats')" style="font-size: 21px; text-align: center; font-weight: 200">Статистика</a></li>
         </ul>
     </div>
 
@@ -47,7 +47,7 @@
                 <option value="ВРЕМЯ_ВЫДАЧИ_ВЫШЛО">Время выдачи вышло</option>
             </select>
             <table class="table table-bordered">
-                <thead><tr><th>ID</th><th>Номер заказа</th><th>Статус</th><th>Дата создания</th></tr></thead>
+                <thead><tr><th>ID</th><th>Номер заказа</th><th>Дата создания</th><th>Статус</th></tr></thead>
                 <tbody id="ordersTable"></tbody>
             </table>
         </div>
@@ -63,7 +63,7 @@
             <h4>Редактирование товара</h4>
             <label>Наименование: <input type="text" id="editName"></label>
             <label>Категория: <input type="number" id="editCategory"></label>
-            <label>Количество: <input type="number" id="editCount"></label>
+            <label>Количество: <input type="number" id="editStock"></label>
             <label>Цена: <input type="number" id="editPrice"></label>
             <button onclick="saveEdit()" class="btn btn-success">Сохранить</button>
             <button onclick="closeModal()" class="btn btn-secondary">Закрыть</button>
@@ -74,11 +74,39 @@
         function showTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             document.getElementById(tabId).classList.remove('hidden');
+
+            if (tabId === 'products') {
+                fetchMenuItems();
+            }
+        }
+
+        function fetchMenuItems() {
+            fetch('https://bot-techsupport.rightscan.ru:8078/api/menu/all')
+                .then(response => response.json())
+                .then(data => {
+                    let tableBody = document.getElementById('menuItemsTable');
+                    tableBody.innerHTML = '';
+                    data.forEach(item => {
+                        let row = `<tr>
+                            <td>${item.id}</td>
+                            <td>${item.name}</td>
+                            <td>${item.category.name}</td>
+                            <td>${item.stock}</td>
+                            <td>${item.price}</td>
+                            <td>
+                                <button class="btn btn-primary" onclick="openEditModal(${item.id}, '${item.name}', ${item.category.name}, ${item.stock}, ${item.price})">Редактировать</button>
+                                <button class="btn btn-danger" onclick="deleteItem(${item.id})">Удалить</button>
+                            </td>
+                        </tr>`;
+                        tableBody.innerHTML += row;
+                    });
+                })
+                .catch(error => console.error('Ошибка загрузки товаров:', error));
         }
 
         function fetchOrdersByStatus() {
             let status = document.getElementById('orderStatusFilter').value;
-            let url = status ? `https://bot-techsupport.rightscan.ru:8078/orders/by-status?status=${status}` : 'https://bot-techsupport.rightscan.ru:8078/orders/all';
+            let url = status ? `https://bot-techsupport.rightscan.ru:8078/order/by-status?status=${status}` : 'https://bot-techsupport.rightscan.ru:8078/order/all';
 
             fetch(url)
                 .then(response => response.json())
@@ -104,10 +132,22 @@
                 .catch(error => console.error('Ошибка загрузки заказов:', error));
         }
 
+        function deleteItem(itemId) {
+            fetch(`https://bot-techsupport.rightscan.ru:8078/api/menu/${itemId}`, { method: 'DELETE' })
+                .then(response => {
+                    if (response.ok) {
+                        fetchMenuItems();
+                    } else {
+                        alert('Ошибка при удалении товара');
+                    }
+                })
+                .catch(error => console.error('Ошибка при удалении товара:', error));
+        }
+
         function openEditModal(id, name, price) {
             $('#editName').val(name);
             $('#editCategory').val(category);
-            $('#editCount').val(count);
+            $('#editStock').val(stock);
             $('#editPrice').val(price);
             $('#editModal').show();
         }

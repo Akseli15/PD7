@@ -86,7 +86,7 @@ public class OrderListService {
     // Метод для получения статистики по продажам блюд за последнюю неделю
     public Map<String, Object> getWeeklyDishSales() {
         // Получаем дату 7 дней назад
-        LocalDateTime oneWeekAgo = LocalDateTime.now().minus(1, ChronoUnit.WEEKS);
+        LocalDateTime oneWeekAgo = LocalDateTime.now().minusWeeks(1);
 
         // Получаем все заказанные позиции за последнюю неделю
         List<OrderItem> orderItems = orderItemRepository.findByOrderCreatedAtAfter(oneWeekAgo);

@@ -17,9 +17,8 @@ public class OrderItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @ManyToOne
+    @ManyToOne (cascade = CascadeType.ALL)
     @JoinColumn(name = "order_id", nullable = false)
-    @JsonBackReference
     private OrderList order;
 
     @ManyToOne (cascade = CascadeType.ALL)
