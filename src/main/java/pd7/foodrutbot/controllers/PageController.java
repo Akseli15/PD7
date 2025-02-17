@@ -18,10 +18,7 @@ import pd7.foodrutbot.service.TelegramBot;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api")
@@ -165,7 +162,7 @@ public class PageController {
     public ResponseEntity<OrderList> createOrder(@RequestParam String chatId) {
         OrderList order = new OrderList();
         order.setChatId(chatId);
-        order.setOrderNumber("#" + System.currentTimeMillis());
+        order.setOrderNumber("ORD" + String.format("%06d", new Random().nextInt(99999)));
         order.setStatus(OrderList.OrderStatus.ЗАКАЗ_ГОТОВИТСЯ);
         order.setCreatedAt(LocalDateTime.now());
         order.setFinalized(false);
