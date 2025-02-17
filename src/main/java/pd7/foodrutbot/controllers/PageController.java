@@ -10,12 +10,14 @@ import pd7.foodrutbot.entities.OrderItem;
 import pd7.foodrutbot.entities.OrderList;
 import pd7.foodrutbot.repositories.CategoryRepository;
 import pd7.foodrutbot.repositories.MenuItemsRepository;
+import pd7.foodrutbot.repositories.OrderItemRepository;
 import pd7.foodrutbot.repositories.OrderListRepository;
 import pd7.foodrutbot.service.MenuService;
 import pd7.foodrutbot.service.OrderListService;
 import pd7.foodrutbot.service.TelegramBot;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +42,9 @@ public class PageController {
 
     @Autowired
     private OrderListRepository orderListRepository;
+
+    @Autowired
+    private OrderItemRepository orderItemRepository;
 
     @Autowired
     private TelegramBot telegramBot;
@@ -153,32 +158,105 @@ public class PageController {
         return ResponseEntity.ok(availableItems);
     }
 
-    //Создать заказ
-    @PostMapping("/order")
-    public ResponseEntity<OrderList> createOrder(@RequestBody Map<String, Object> request) {
-        String orderNumber = (String) request.get("orderNumber");
-        String chatId = (String) request.get("chatId");
+    /**
+     * Создание новой корзины (заказа)
+     */
+    @PostMapping("/order/create")
+    public ResponseEntity<OrderList> createOrder(@RequestParam String chatId) {
+        OrderList order = new OrderList();
+        order.setChatId(chatId);
+        order.setOrderNumber("#" + System.currentTimeMillis());
+        order.setStatus(OrderList.OrderStatus.ЗАКАЗ_ГОТОВИТСЯ);
+        order.setCreatedAt(LocalDateTime.now());
+        order.setFinalized(false);
 
-        List<Map<String, Object>> itemsList = (List<Map<String, Object>>) request.get("orderItems");
-        List<OrderItem> orderItems = new ArrayList<>();
+        orderListRepository.save(order);
+        return ResponseEntity.ok(order);
+    }
 
-        for (Map<String, Object> itemData : itemsList) {
-            Integer menuItemId = (Integer) itemData.get("menuItemId");
-            Integer quantity = (Integer) itemData.get("quantity");
+    /**
+     * Добавление товара в корзину
+     */
+    @PostMapping("/order/{orderId}/addItem")
+    public ResponseEntity<OrderItem> addItemToOrder(@PathVariable Integer orderId,
+                                                    @RequestParam Integer menuItemId,
+                                                    @RequestParam Integer quantity) {
+        Optional<OrderList> orderOpt = orderListRepository.findById(orderId);
+        Optional<MenuItems> menuItemOpt = menuItemsRepository.findById(menuItemId);
 
-            MenuItems menuItem = menuItemsRepository.findById(menuItemId)
-                    .orElseThrow(() -> new RuntimeException("Товар с ID " + menuItemId + " не найден"));
-
-            OrderItem item = new OrderItem();
-            item.setMenuItem(menuItem);
-            item.setQuantity(quantity);
-            item.setPrice(menuItem.getPrice().multiply(BigDecimal.valueOf(quantity)));
-
-            orderItems.add(item);
+        if (orderOpt.isEmpty() || menuItemOpt.isEmpty()) {
+            return ResponseEntity.badRequest().build();
         }
 
-        OrderList newOrder = orderListService.createOrder(orderNumber, orderItems, chatId);
-        return ResponseEntity.ok(newOrder);
+        OrderList order = orderOpt.get();
+        MenuItems menuItem = menuItemOpt.get();
+
+        if (order.isFinalized()) {
+            return ResponseEntity.badRequest().body(null);
+        }
+
+        OrderItem orderItem = new OrderItem();
+        orderItem.setOrder(order);
+        orderItem.setMenuItem(menuItem);
+        orderItem.setQuantity(quantity);
+        orderItem.setPrice(menuItem.getPrice().multiply(BigDecimal.valueOf(quantity)));
+
+        orderItemRepository.save(orderItem);
+        return ResponseEntity.ok(orderItem);
+    }
+
+    /**
+     * Удаление товара из корзины
+     */
+    @DeleteMapping("/order/{orderId}/removeItem/{itemId}")
+    public ResponseEntity<Void> removeItemFromOrder(@PathVariable Integer orderId,
+                                                    @PathVariable Integer itemId) {
+        Optional<OrderItem> itemOpt = orderItemRepository.findById(itemId);
+
+        if (itemOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        OrderItem item = itemOpt.get();
+        if (!item.getOrder().getId().equals(orderId) || item.getOrder().isFinalized()) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        orderItemRepository.delete(item);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Получение всех товаров в корзине
+     */
+    @GetMapping("/{orderId}/items")
+    public ResponseEntity<List<OrderItem>> getOrderItems(@PathVariable Integer orderId) {
+        Optional<OrderList> orderOpt = orderListRepository.findById(orderId);
+        return orderOpt.map(order -> ResponseEntity.ok(order.getItems()))
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    /**
+     * Финализация заказа (оформление)
+     */
+    @PostMapping("/{orderId}/finalize")
+    public ResponseEntity<OrderList> finalizeOrder(@PathVariable Integer orderId) {
+        Optional<OrderList> orderOpt = orderListRepository.findById(orderId);
+
+        if (orderOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        OrderList order = orderOpt.get();
+        if (order.isFinalized() || order.getItems().isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        order.setFinalized(true);
+        order.setStatus(OrderList.OrderStatus.ГОТОВ_К_ВЫДАЧЕ);
+        orderListRepository.save(order);
+
+        return ResponseEntity.ok(order);
     }
 
     // Получить заказ по номеру

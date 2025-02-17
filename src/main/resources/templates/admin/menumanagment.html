@@ -53,8 +53,17 @@
         </div>
 
         <div id="stats" class="tab-content hidden">
-            <h2>Статистика</h2>
-            <p>Раздел статистики в разработке...</p>
+            <h2>Статистика продаж за неделю</h2>
+            <table class="table table-bordered" id="statsTable">
+                <thead>
+                    <tr>
+                        <th>Наименование товара</th>
+                        <th>Количество</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+            <button class="btn btn-primary" onclick="fetchStats()">Обновить статистику</button>
         </div>
     </div>
 
@@ -62,7 +71,7 @@
         <div class="modal-content">
             <h4>Редактирование товара</h4>
             <label>Наименование: <input type="text" id="editName"></label>
-            <label>Категория: <input type="number" id="editCategory"></label>
+            <label>Категория: <input type="text" id="editCategory"></label>
             <label>Количество: <input type="number" id="editStock"></label>
             <label>Цена: <input type="number" id="editPrice"></label>
             <button onclick="saveEdit()" class="btn btn-success">Сохранить</button>
@@ -77,6 +86,10 @@
 
             if (tabId === 'products') {
                 fetchMenuItems();
+            }
+
+            if (tabId === 'stats') {
+                fetchStats();
             }
         }
 
@@ -131,6 +144,24 @@
                 })
                 .catch(error => console.error('Ошибка загрузки заказов:', error));
         }
+
+        function fetchStats() {
+        fetch('https://bot-techsupport.rightscan.ru:8078/api/order/stats/weekly')
+            .then(response => response.json())
+            .then(data => {
+                let tableBody = document.querySelector('#statsTable tbody');
+                tableBody.innerHTML = '';
+
+                for (let i = 0; i < data["наименование товара"].length; i++) {
+                    let row = `<tr>
+                        <td>${data["наименование товара"][i]}</td>
+                        <td>${data["количество"][i]}</td>
+                    </tr>`;
+                    tableBody.innerHTML += row;
+                }
+            })
+            .catch(error => console.error('Ошибка загрузки статистики:', error));
+    }
 
         function deleteItem(itemId) {
             fetch(`https://bot-techsupport.rightscan.ru:8078/api/menu/${itemId}`, { method: 'DELETE' })

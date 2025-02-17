@@ -5,7 +5,9 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -16,7 +18,6 @@ public class OrderList {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
     private Integer id;
 
     @Column(name="chat_id", nullable = false)
@@ -25,15 +26,19 @@ public class OrderList {
     @Column(name = "order_number", nullable = false, length = 10, unique = true)
     private String orderNumber;
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<OrderItem> items;
-
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private OrderStatus status;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
+
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    private List<OrderItem> items = new ArrayList<>();
+
+    @Column(name = "is_finalized", nullable = false)
+    private boolean isFinalized = false;
 
     public enum OrderStatus {
         ЗАКАЗ_ВЫДАН("Заказ выдан"),
@@ -42,13 +47,24 @@ public class OrderList {
         ВРЕМЯ_ВЫДАЧИ_ВЫШЛО("Время выдачи вышло");
 
         private final String status;
+        OrderStatus(String status) { this.status = status; }
+        public String getStatus() { return status; }
+    }
 
-        OrderStatus(String status) {
-            this.status = status;
-        }
+    // Методы для управления корзиной
+    public void addItem(OrderItem item) {
+        items.add(item);
+        item.setOrder(this);
+    }
 
-        public String getStatus() {
-            return status;
-        }
+    public void removeItem(OrderItem item) {
+        items.remove(item);
+        item.setOrder(null);
+    }
+
+    public BigDecimal calculateTotalPrice() {
+        return items.stream()
+                .map(OrderItem::getPrice)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 }

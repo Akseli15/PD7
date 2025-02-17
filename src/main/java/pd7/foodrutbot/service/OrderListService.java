@@ -30,7 +30,7 @@ public class OrderListService {
 
     // Создание нового заказа
     @Transactional
-    public OrderList createOrder(String orderNumber, List<OrderItem> orderItems, String chatId) {
+    public OrderList createOrder(String orderNumber,  String chatId) {
         // Создаем новый заказ
         OrderList orderList = new OrderList();
         orderList.setOrderNumber(orderNumber);
@@ -40,12 +40,6 @@ public class OrderListService {
 
         // Сохраняем заказ в базе
         OrderList savedOrder = orderListRepository.save(orderList);
-
-        // Привязываем позиции заказа к заказу и сохраняем их
-        for (OrderItem item : orderItems) {
-            item.setOrder(savedOrder);
-            orderItemRepository.save(item);
-        }
 
         return savedOrder;
     }

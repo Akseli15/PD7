@@ -187,7 +187,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             // Фильтруем заказы с текущим статусом "в очереди"
             orders = orders.stream()
-                    .filter(order -> order.getStatus() == OrderList.OrderStatus.ЗАКАЗ_ГОТОВИТСЯ)
+                    .filter(order -> order.getStatus() != OrderList.OrderStatus.ЗАКАЗ_ВЫДАН)
                     .collect(Collectors.toList());
 
             if (orders.isEmpty()) {
@@ -197,21 +197,6 @@ public class TelegramBot extends TelegramLongPollingBot {
                     ordersText.append("Заказ № ").append(order.getOrderNumber())
                             .append("\nСтатус: ").append(order.getStatus()).append("\n\n");
 
-                    // Перебираем элементы заказа (OrderItem)
-                    for (OrderItem orderItem : order.getItems()) {
-                        MenuItems menuItem = orderItem.getMenuItem();
-                        int quantity = orderItem.getQuantity();
-
-                        if (menuItem != null) {
-                            ordersText.append(menuItem.getName()).append(" ")
-                                    .append(quantity).append(" шт. - ")
-                                    .append(menuItem.getPrice().multiply(BigDecimal.valueOf(quantity)))
-                                    .append(" руб.\n");
-                        } else {
-                            ordersText.append("Блюдо с ID ").append(orderItem.getMenuItem().getId())
-                                    .append(" не найдено.\n");
-                        }
-                    }
                     ordersText.append("\n");
                 }
 
