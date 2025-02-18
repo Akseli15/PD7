@@ -195,7 +195,19 @@ public class TelegramBot extends TelegramLongPollingBot {
             } else {
                 for (OrderList order : orders) {
                     ordersText.append("Заказ № ").append(order.getOrderNumber())
-                            .append("\nСтатус: ").append(order.getStatus()).append("\n\n");
+                            .append("\nСтатус: ").append(order.getStatus()).append("\n");
+
+                    // Добавляем список товаров в заказе
+                    List<OrderItem> items = order.getItems();
+                    if (items != null && !items.isEmpty()) {
+                        ordersText.append("Товары в заказе:\n");
+                        for (OrderItem item : items) {
+                            ordersText.append("- ").append(item.getMenuItem().getName())
+                                    .append(" (").append(item.getQuantity()).append(" шт.)\n");
+                        }
+                    } else {
+                        ordersText.append("Товары в заказе отсутствуют.\n");
+                    }
 
                     ordersText.append("\n");
                 }
