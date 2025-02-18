@@ -53,7 +53,7 @@ public class PageController {
 
 
     /**
-     * Получить все блюда
+     * Получить все блюда (добавлено)
      */
     @GetMapping("/menu/all")
     public ResponseEntity<List<MenuItems>> getAllMenuItems() {
@@ -89,7 +89,7 @@ public class PageController {
     }
 
     /**
-     * Обновить блюдо по ID
+     * Обновить блюдо по ID (добавлено)
      */
     @PutMapping("/menu/{id}")
     public ResponseEntity<MenuItems> updateMenuItem(@PathVariable Integer id, @RequestBody MenuItems updatedMenuItem) {
@@ -106,7 +106,7 @@ public class PageController {
     }
 
     /**
-     * Удалить блюдо по ID
+     * Удалить блюдо по ID (добавлено)
      */
     @DeleteMapping("/menu/{id}")
     public ResponseEntity<Void> deleteMenuItem(@PathVariable Integer id) {
@@ -318,5 +318,30 @@ public class PageController {
     public ResponseEntity<List<Category>> getAllCategories() {
         List<Category> categories = categoryService.findAll();
         return ResponseEntity.ok(categories);
+    }
+
+    /**
+     * Создание категории
+     */
+    @PostMapping("category")
+    public ResponseEntity<?> createCategory(@RequestBody Category category) {
+        if (category.getName() == null || category.getName().trim().isEmpty()) {
+            return ResponseEntity.badRequest().body("Название категории не может быть пустым");
+        }
+        Category createdCategory = categoryService.addCategory(category);
+        return ResponseEntity.ok(createdCategory);
+    }
+
+    /**
+     * Удаление категории
+     */
+    @DeleteMapping("category/{id}")
+    public ResponseEntity<?> deleteCategory(@PathVariable Integer id) {
+        try {
+            categoryService.deleteCategory(id);
+            return ResponseEntity.ok("Категория удалена успешно");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Ошибка при удалении категории: " + e.getMessage());
+        }
     }
 }

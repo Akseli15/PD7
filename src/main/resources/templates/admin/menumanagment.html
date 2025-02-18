@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-   <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Управление</title>
@@ -10,139 +10,313 @@
     <link href="https://fonts.googleapis.com/css2?family=Kosugi+Maru&display=swap" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
-        body { display: flex; }
-        #sidebar { width: 250px; height: 100vh; background: #30D5C8; color: white; padding: 20px; }
-        #content { flex-grow: 1; padding: 20px; color:#30D5C8}
-        .hidden { display: none; }
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); display: none; justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 20px; border-radius: 5px; }
-        h4 { text-align: center; font-family: 'Kosugi Maru', sans-serif; font-size: 21px}
-        .filter-btn { border: 1px solid #DFDFDF; color: #000; background: white; padding: 6px 14px;font-weight: bold;transition: 0.3s; border-radius: 8px}
-        .filter-btn:hover, .filter-btn.active {background: #30D5C8;color: white; border-radius: 8px; border: 1px solid #30D5C8}
-        .d-flex.gap-2 { gap: 8px; }
+        body {
+            display: flex;
+        }
+
+        #sidebar {
+            width: 250px;
+            height: 100vh;
+            background: #30D5C8;
+            color: white;
+            padding: 20px;
+        }
+
+        #content {
+            flex-grow: 1;
+            padding: 20px;
+            color: #30D5C8
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+        }
+
+        h4 {
+            text-align: center;
+            font-family: 'Kosugi Maru', sans-serif;
+            font-size: 21px
+        }
+
+        .filter-btn {
+            border: 1px solid #DFDFDF;
+            color: #000;
+            background: white;
+            padding: 6px 14px;
+            font-weight: bold;
+            transition: 0.3s;
+            border-radius: 8px
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            background: #30D5C8;
+            color: white;
+            border-radius: 8px;
+            border: 1px solid #30D5C8
+        }
+
+        .d-flex.gap-2 {
+            gap: 8px;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 500px;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            transition: right 0.3s ease;
+            z-index: 1000;
+        }
+
+        .modal-overlay.show {
+            right: 0;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            right: 0; /* Окно будет находиться справа */
+            width: 30%; /* Ширина модального окна */
+            height: 100%;
+            background-color: #fff; /* Белый фон окна */
+            border-left: 5px solid #30D5C8; /* Цветной бортик с левой стороны */
+            box-shadow: -2px 0 10px rgba(0, 0, 0, 0.2); /* Легкая тень */
+            z-index: 1000; /* Окно будет поверх всего остального контента */
+        }
+
+        .modal-content {
+            padding: 20px;
+            height: 100%;
+            overflow-y: auto; /* Прокрутка, если контента много */
+        }
+
+        .editInput, .editSelect {
+            width: 100%;
+            padding: 8px;
+            margin: 8px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .editbtn {
+            margin: 10px 0;
+            padding: 10px;
+            width: 100%;
+            border-radius: 4px;
+        }
+
+        .btn-success, .btn-secondary {
+            background-color: white;
+            color: black;
+            border: 1px solid #DFDFDF;
+        }
+
+        .btn-primary, .btn-danger{
+            background-color: #30D5C8;
+            color: white;
+            border: 1px solid #30D5C8;
+        }
+
+        .btn-success:hover {
+            background-color: #30D5C8;
+            color: white;
+            border: 1px solid #30D5C8;
+        }
+
+        .btn-secondary:hover, .btn-primary:hover, .btn-danger:hover {
+            background-color: #ccc;
+            color: white;
+            border: 1px solid #ccc;
+        }
+
     </style>
 </head>
 <body>
-    <div id="sidebar">
-        <h4>АКВАРИУМ</h4>
-        <ul class="nav flex-column">
-            <li class="nav-item"><a href="#" class="nav-link text-white" onclick="showTab('products')" style="font-size: 21px; text-align: center; font-weight: 200">Позиции меню</a></li>
-            <li class="nav-item"><a href="#" class="nav-link text-white" onclick="showTab('orders')" style="font-size: 21px; text-align: center; font-weight: 200">Заказы</a></li>
-            <li class="nav-item"><a href="#" class="nav-link text-white" onclick="showTab('stats')" style="font-size: 21px; text-align: center; font-weight: 200">Статистика</a></li>
-        </ul>
+<div id="sidebar">
+    <h4>АКВАРИУМ</h4>
+    <ul class="nav flex-column">
+        <li class="nav-item"><a href="#" class="nav-link text-white" onclick="showTab('products')"
+                                style="font-size: 21px; text-align: center; font-weight: 200">Позиции меню</a></li>
+        <li class="nav-item"><a href="#" class="nav-link text-white" onclick="showTab('orders')"
+                                style="font-size: 21px; text-align: center; font-weight: 200">Заказы</a></li>
+        <li class="nav-item"><a href="#" class="nav-link text-white" onclick="showTab('stats')"
+                                style="font-size: 21px; text-align: center; font-weight: 200">Статистика</a></li>
+    </ul>
+</div>
+
+<div id="content">
+    <div id="products" class="tab-content">
+        <h2>Позиции меню</h2>
+        <div style="margin-bottom: 8px">
+            <button class="filter-btn" onclick="openAddItemModal()">Добавить позицию</button>
+            <button class="filter-btn" onclick="openAddCategoryModal()">Добавить категорию</button>
+        </div>
+        <table class="table table-bordered">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Наименование</th>
+                <th>Категория</th>
+                <th>Количество</th>
+                <th>Цена</th>
+                <th>Действия</th>
+            </tr>
+            </thead>
+            <tbody id="menuItemsTable"></tbody>
+        </table>
     </div>
 
-    <div id="content">
-        <div id="products" class="tab-content">
-            <h2>Позиции меню</h2>
-            <table class="table table-bordered">
-                <thead><tr><th>ID</th><th>Наименование</th><th>Категория</th><th>Количество</th><th>Цена</th><th>Действия</th></tr></thead>
-                <tbody id="menuItemsTable"></tbody>
-            </table>
+    <div id="orders" class="tab-content hidden">
+        <h2>Заказы</h2>
+
+        <div class="d-flex gap-2 mb-3">
+            <button class="filter-btn active" onclick="fetchOrdersByStatus('', this)">Все</button>
+            <button class="filter-btn" onclick="fetchOrdersByStatus('ЗАКАЗ_ВЫДАН', this)">Заказ выдан</button>
+            <button class="filter-btn" onclick="fetchOrdersByStatus('ЗАКАЗ_ГОТОВИТСЯ', this)">Заказ готовится</button>
+            <button class="filter-btn" onclick="fetchOrdersByStatus('ГОТОВ_К_ВЫДАЧЕ', this)">Готов к выдаче</button>
+            <button class="filter-btn" onclick="fetchOrdersByStatus('ВРЕМЯ_ВЫДАЧИ_ВЫШЛО', this)">Время выдачи вышло</button>
         </div>
 
-        <div id="orders" class="tab-content hidden">
-            <h2>Заказы</h2>
-
-            <div class="d-flex gap-2 mb-3">
-                <button class="filter-btn active" onclick="fetchOrdersByStatus('', this)">Все</button>
-                <button class="filter-btn" onclick="fetchOrdersByStatus('ЗАКАЗ_ВЫДАН', this)">Заказ выдан</button>
-                <button class="filter-btn" onclick="fetchOrdersByStatus('ЗАКАЗ_ГОТОВИТСЯ', this)">Заказ готовится</button>
-                <button class="filter-btn" onclick="fetchOrdersByStatus('ГОТОВ_К_ВЫДАЧЕ', this)">Готов к выдаче</button>
-                <button class="filter-btn" onclick="fetchOrdersByStatus('ВРЕМЯ_ВЫДАЧИ_ВЫШЛО', this)">Время выдачи вышло</button>
-            </div>
-
-            <table class="table table-bordered">
-                <thead>
-                <tr>
-                    <th>ID</th><th>Номер заказа</th><th>Дата создания</th><th>Статус</th>
-                </tr>
-                </thead>
-                <tbody id="ordersTable"></tbody>
-            </table>
-        </div>
-
-        <div id="stats" class="tab-content hidden">
-            <h2>Статистика продаж за неделю</h2>
-            <table class="table table-bordered" id="statsTable">
-                <thead>
-                    <tr>
-                        <th>Наименование товара</th>
-                        <th>Количество</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-            <button class="btn btn-primary" onclick="fetchStats()">Обновить статистику</button>
-        </div>
+        <table class="table table-bordered">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Номер заказа</th>
+                <th>Дата создания</th>
+                <th>Статус</th>
+            </tr>
+            </thead>
+            <tbody id="ordersTable"></tbody>
+        </table>
     </div>
 
-    <div class="modal-overlay" id="editModal">
-        <div class="modal-content">
-            <h4>Редактирование товара</h4>
-            <label>Наименование: <input type="text" id="editName"></label>
-            <label>Категория: <input type="text" id="editCategory"></label>
-            <label>Количество: <input type="number" id="editStock"></label>
-            <label>Цена: <input type="number" id="editPrice"></label>
-            <button onclick="saveEdit()" class="btn btn-success">Сохранить</button>
-            <button onclick="closeModal()" class="btn btn-secondary">Закрыть</button>
-        </div>
+    <div id="stats" class="tab-content hidden">
+        <h2>Статистика продаж за неделю</h2>
+        <table class="table table-bordered" id="statsTable">
+            <thead>
+            <tr>
+                <th>Наименование товара</th>
+                <th>Количество</th>
+            </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        <button class="btn btn-primary" onclick="fetchStats()">Обновить статистику</button>
     </div>
+</div>
 
-    <script>
-        function showTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            document.getElementById(tabId).classList.remove('hidden');
+<div class="modal-overlay" id="addModal">
+    <div class="modal-content">
+        <h2>Добавление новой позиции меню</h2>
+        <label>Наименование: <input class="editInput"type="text" id="addName"></label>
+        <label>Категория:<select class="editSelect" id="addCategory"></select></label>
+        <label>Количество: <input class="editInput"type="number" id="addStock"></label>
+        <label>Цена: <input class="editInput" type="number" id="addPrice"></label>
+        <button onclick="saveAdd()" class="btn editbtn btn-success">Сохранить</button>
+        <button onclick="closeAddModal()" class="btn editbtn btn-secondary">Закрыть</button>
+    </div>
+</div>
 
-            if (tabId === 'products') {
-                fetchMenuItems();
-            }
-            
-            if (tabId === 'orders'){
-                fetchOrdersByStatus();
-            }
+<div class="modal-overlay" id="editModal">
+    <div class="modal-content">
+        <h2>Редактирование товара</h2>
+        <input type="hidden" id="editId" />
+        <label>Наименование: <input class="editInput" type="text" id="editName"></label>
+        <label>Категория:<select class="editSelect" id="editCategory"></select></label>
+        <label>Количество: <input class="editInput" type="number" id="editStock"></label>
+        <label>Цена: <input class="editInput" type="number" id="editPrice"></label>
+        <button onclick="saveEdit()" class="editbtn btn btn-success">Сохранить</button>
+        <button onclick="closeModal()" class="editbtn btn btn-secondary">Закрыть</button>
+    </div>
+</div>
 
-            if (tabId === 'stats') {
-                fetchStats();
-            }
+<div class="modal-overlay" id="addCategoryModal">
+    <div class="modal-content">
+        <h4>Добавить категорию</h4>
+        <label>Название категории: <input class="editInput"  type="text" id="categoryName"></label>
+        <button onclick="saveCategory()" class="btn editbtn btn-success">Сохранить</button>
+        <button onclick="closeAddCategoryModal()" class="btn editbtn btn-secondary">Закрыть</button>
+    </div>
+</div>
+
+
+<script>
+    fetchMenuItems();
+
+    function showTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+        document.getElementById(tabId).classList.remove('hidden');
+
+        if (tabId === 'products') {
+            fetchMenuItems();
         }
 
-        function fetchMenuItems() {
-            fetch('https://bot-techsupport.rightscan.ru:8078/api/menu/all')
-                .then(response => response.json())
-                .then(data => {
-                    let tableBody = document.getElementById('menuItemsTable');
-                    tableBody.innerHTML = '';
-                    data.forEach(item => {
-                        let row = `<tr>
-                            <td>${item.id}</td>
-                            <td>${item.name}</td>
-                            <td>${item.category.name}</td>
-                            <td>${item.stock}</td>
-                            <td>${item.price}</td>
-                            <td>
-                                <button class="btn btn-primary" onclick="openEditModal(${item.id}, '${item.name}', ${item.category.name}, ${item.stock}, ${item.price})">Редактировать</button>
-                                <button class="btn btn-danger" onclick="deleteItem(${item.id})">Удалить</button>
-                            </td>
-                        </tr>`;
-                        tableBody.innerHTML += row;
-                    });
-                })
-                .catch(error => console.error('Ошибка загрузки товаров:', error));
+        if (tabId === 'orders') {
+            fetchOrdersByStatus();
         }
 
-        function fetchOrdersByStatus(status, button) {
-            let url = (status && status !== 'ВСЕ') ?
-                `https://bot-techsupport.rightscan.ru:8078/api/order/by-status?status=${encodeURIComponent(status)}` :
-                'https://bot-techsupport.rightscan.ru:8078/api/order/all';
+        if (tabId === 'stats') {
+            fetchStats();
+        }
+    }
 
-            fetch(url)
-                .then(response => response.json())
-                .then(data => {
-                    let tableBody = document.getElementById('ordersTable');
-                    tableBody.innerHTML = ''; // Очищаем таблицу перед загрузкой
+    function fetchMenuItems() {
+        fetch('https://bot-techsupport.rightscan.ru:8078/api/menu/all')
+            .then(response => response.json())
+            .then(data => {
+                let tableBody = document.getElementById('menuItemsTable');
+                tableBody.innerHTML = '';
+                data.forEach(item => {
+                    let row = `<tr>
+    <td>${item.id}</td>
+    <td>${item.name}</td>
+    <td>${item.category.name}</td>
+    <td>${item.stock}</td>
+    <td>${item.price}</td>
+    <td>
+        <button class="btn btn-primary" onclick="openEditModal(${item.id}, '${item.name}', '${item.category.name}', ${item.stock}, ${item.price})">Редактировать</button>
+        <button class="btn btn-danger" onclick="deleteItem(${item.id})">Удалить</button>
+    </td>
+</tr>`;
 
-                    let rows = data.map(order => `
+                    tableBody.innerHTML += row;
+                });
+            })
+            .catch(error => console.error('Ошибка загрузки товаров:', error));
+    }
+
+    function fetchOrdersByStatus(status, button) {
+        let url = (status && status !== 'ВСЕ') ?
+            `https://bot-techsupport.rightscan.ru:8078/api/order/by-status?status=${encodeURIComponent(status)}` :
+            'https://bot-techsupport.rightscan.ru:8078/api/order/all';
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                let tableBody = document.getElementById('ordersTable');
+                tableBody.innerHTML = ''; // Очищаем таблицу перед загрузкой
+
+                let rows = data.map(order => `
                 <tr>
                     <td>${order.id}</td>
                     <td>${order.chatId}</td>
@@ -157,18 +331,18 @@
                     </td>
                 </tr>
             `).join('');
-                    tableBody.innerHTML = rows;
-                    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-                    button.classList.add('active');
-                })
-                .catch(error => console.error('Ошибка загрузки заказов:', error));
-        }
+                tableBody.innerHTML = rows;
+                document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+            })
+            .catch(error => console.error('Ошибка загрузки заказов:', error));
+    }
 
-        // Добавляем обработчик, если фильтр меняется
-        document.getElementById('orderStatusFilter').addEventListener('change', fetchOrdersByStatus);
+    // Добавляем обработчик, если фильтр меняется
+    document.getElementById('orderStatusFilter').addEventListener('change', fetchOrdersByStatus);
 
 
-        function fetchStats() {
+    function fetchStats() {
         fetch('https://bot-techsupport.rightscan.ru:8078/api/order/stats/weekly')
             .then(response => response.json())
             .then(data => {
@@ -186,75 +360,156 @@
             .catch(error => console.error('Ошибка загрузки статистики:', error));
     }
 
-        function deleteItem(itemId) {
-            fetch(`https://bot-techsupport.rightscan.ru:8078/api/menu/${itemId}`, { method: 'DELETE' })
-                .then(response => {
-                    if (response.ok) {
-                        fetchMenuItems();
-                    } else {
-                        alert('Ошибка при удалении товара');
-                    }
-                })
-                .catch(error => console.error('Ошибка при удалении товара:', error));
-        }
-
-        function loadCategories() {
-            fetch('https://bot-techsupport.rightscan.ru:8078/api/category')
-                .then(response => response.json())
-                .then(categories => {
-                    let select = $('#editCategory');
-                    select.empty();
-                    categories.forEach(category => {
-                        select.append(`<option value="${category.id}">${category.name}</option>`);
-                    });
-                })
-                .catch(error => console.error('Ошибка загрузки категорий:', error));
-        }
-
-        function openEditModal(id, name, category, stock, price) {
-            $('#editId').val(id);
-            $('#editName').val(name);
-            $('#editStock').val(stock);
-            $('#editPrice').val(price);
-
-            loadCategories();
-
-            setTimeout(() => {
-                $('#editCategory').val(category.id);
-            }, 300);
-
-            $('#editModal').show();
-        }
-
-        function saveEdit() {
-            let id = $('#editId').val();
-            let updatedItem = {
-                name: $('#editName').val(),
-                category: { id: $('#editCategory').val() },
-                stock: parseInt($('#editStock').val()),
-                price: parseFloat($('#editPrice').val()),
-                available: true
-            };
-
-            fetch(`https://bot-techsupport.rightscan.ru:8078/api/menu/${id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(updatedItem)
+    function deleteItem(itemId) {
+        fetch(`https://bot-techsupport.rightscan.ru:8078/api/menu/${itemId}`, {method: 'DELETE'})
+            .then(response => {
+                if (response.ok) {
+                    fetchMenuItems();
+                }
             })
-                .then(response => {
-                    if (!response.ok) throw new Error('Ошибка при обновлении');
-                    return response.json();
-                })
-                .then(data => {
-                    alert('Обновлено успешно!');
-                    closeModal();
-                    location.reload();
-                })
-                .catch(error => console.error('Ошибка обновления:', error));
+            .catch(error => console.error('Ошибка при удалении товара:', error));
+    }
+
+    function loadCategories() {
+        fetch('https://bot-techsupport.rightscan.ru:8078/api/category')
+            .then(response => response.json())
+            .then(categories => {
+                let editSelect = $('#editCategory');
+                let addSelect = $('#addCategory');
+
+                editSelect.empty();
+                addSelect.empty();
+
+                categories.forEach(category => {
+                    let option = `<option value="${category.id}">${category.name}</option>`;
+                    editSelect.append(option);
+                    addSelect.append(option);
+                });
+            })
+            .catch(error => console.error('Ошибка загрузки категорий:', error));
+    }
+
+
+    function openEditModal(id, name, category, stock, price) {
+        $('#editId').val(id);
+        $('#editName').val(name);
+        $('#editStock').val(stock);
+        $('#editPrice').val(price);
+
+        loadCategories();
+
+        setTimeout(() => {
+            $('#editCategory').val(category.id);
+        }, 300);
+
+        $('#editModal').show();
+    }
+
+    function saveEdit() {
+        let id = $('#editId').val();
+        let updatedItem = {
+            name: $('#editName').val(),
+            category: {id: $('#editCategory').val()},
+            stock: parseInt($('#editStock').val()),
+            price: parseFloat($('#editPrice').val()),
+            available: true
+        };
+
+        fetch(`https://bot-techsupport.rightscan.ru:8078/api/menu/${id}`, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(updatedItem)
+        })
+            .then(response => {
+                if (!response.ok) throw new Error('Ошибка при обновлении');
+                return response.json();
+            })
+            .then(data => {
+                closeModal();
+                fetchMenuItems();
+            })
+            .catch(error => console.error('Ошибка обновления:', error));
+    }
+
+    function closeModal() {
+        $('#editModal').hide();
+    }
+
+    function openAddItemModal() {
+        $('#addName').val('');
+        $('#editCategory').val('')
+        $('#addStock').val('');
+        $('#addPrice').val('');
+
+        loadCategories();
+
+        $('#addModal').show();
+    }
+
+    function closeAddModal() {
+        $('#addModal').hide();
+    }
+
+    function saveCategory() {
+        let categoryName = $('#categoryName').val().trim();
+
+        if (!categoryName) {
+            alert("Введите название категории!");
+            return;
         }
 
-        function closeModal() { $('#editModal').hide(); }
+        fetch('https://bot-techsupport.rightscan.ru:8078/api/category', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ name: categoryName })
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Ошибка при добавлении категории');
+                }
+                return response.json();
+            })
+            .then(data => {
+                $('#addCategoryModal').hide();
+                fetchMenuItems();
+            })
+            .catch(error => {
+                console.error("Ошибка:", error);
+                alert("Ошибка при добавлении категории.");
+            });
+    }
 
-    </script>
+    function closeAddCategoryModal() {
+        $('#addCategoryModal').hide();
+    }
+
+    function saveAdd() {
+        let newItem = {
+            name: $('#addName').val(),
+            category: { id: $('#addCategory').val() },
+            stock: parseInt($('#addStock').val()),
+            price: parseFloat($('#addPrice').val()),
+            available: true
+        };
+
+        fetch('https://bot-techsupport.rightscan.ru:8078/api/menu', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newItem)
+        })
+            .then(response => {
+                if (!response.ok) throw new Error('Ошибка при добавлении');
+                return response.json();
+            })
+            .then(data => {
+                closeAddModal();
+                fetchMenuItems();
+            })
+            .catch(error => console.error('Ошибка добавления:', error));
+    }
+
+</script>
 </body>
 </html>
