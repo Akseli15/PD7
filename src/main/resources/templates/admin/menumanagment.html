@@ -252,7 +252,7 @@
 
 <div class="modal-overlay" id="addCategoryModal">
     <div class="modal-content">
-        <h4>Добавить категорию</h4>
+        <h2>Добавить категорию</h2>
         <label>Название категории: <input class="editInput"  type="text" id="categoryName"></label>
         <button onclick="saveCategory()" class="btn editbtn btn-success">Сохранить</button>
         <button onclick="closeAddCategoryModal()" class="btn editbtn btn-secondary">Закрыть</button>
@@ -336,6 +336,20 @@
                 button.classList.add('active');
             })
             .catch(error => console.error('Ошибка загрузки заказов:', error));
+    }
+
+    function updateOrderStatus(orderId, newStatus) {
+        fetch(`https://bot-techsupport.rightscan.ru:8078/api/order/${orderId}/status?status=${newStatus}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(response => response.text())
+            .then(data => {
+                fetchOrdersByStatus();
+            })
+            .catch(error => console.error('Ошибка обновления статуса заказа:', error));
     }
 
     // Добавляем обработчик, если фильтр меняется
@@ -444,6 +458,10 @@
         loadCategories();
 
         $('#addModal').show();
+    }
+
+    function openAddCategoryModal() {
+        $('#addCategoryModal').show();
     }
 
     function closeAddModal() {

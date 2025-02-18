@@ -295,6 +295,7 @@ public class PageController {
         if (orderOptional.isPresent()) {
             OrderList order = orderOptional.get();
             order.setStatus(status);
+            telegramBot.sendUserNotification(order.getChatId(),"Статус вашего заказа №" + order.getId() + " изменён на: " + status);
             orderListRepository.save(order);
             return ResponseEntity.ok("Статус заказа обновлён на: " + status);
         } else {
