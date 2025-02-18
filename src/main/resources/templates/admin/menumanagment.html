@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+   <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Управление</title>
@@ -16,13 +17,16 @@
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); display: none; justify-content: center; align-items: center; }
         .modal-content { background: white; padding: 20px; border-radius: 5px; }
         h4 { text-align: center; font-family: 'Kosugi Maru', sans-serif; font-size: 21px}
+        .filter-btn { border: 1px solid #DFDFDF; color: #000; background: white; padding: 6px 14px;font-weight: bold;transition: 0.3s; border-radius: 8px}
+        .filter-btn:hover, .filter-btn.active {background: #30D5C8;color: white; border-radius: 8px; border: 1px solid #30D5C8}
+        .d-flex.gap-2 { gap: 8px; }
     </style>
 </head>
 <body>
     <div id="sidebar">
         <h4>АКВАРИУМ</h4>
         <ul class="nav flex-column">
-            <li class="nav-item"><a href="#" class="nav-link text-white" onclick="showTab('products')" style="font-size: 21px; text-align: center; font-weight: 200">Товары</a></li>
+            <li class="nav-item"><a href="#" class="nav-link text-white" onclick="showTab('products')" style="font-size: 21px; text-align: center; font-weight: 200">Позиции меню</a></li>
             <li class="nav-item"><a href="#" class="nav-link text-white" onclick="showTab('orders')" style="font-size: 21px; text-align: center; font-weight: 200">Заказы</a></li>
             <li class="nav-item"><a href="#" class="nav-link text-white" onclick="showTab('stats')" style="font-size: 21px; text-align: center; font-weight: 200">Статистика</a></li>
         </ul>
@@ -30,7 +34,7 @@
 
     <div id="content">
         <div id="products" class="tab-content">
-            <h2>Товары</h2>
+            <h2>Позиции меню</h2>
             <table class="table table-bordered">
                 <thead><tr><th>ID</th><th>Наименование</th><th>Категория</th><th>Количество</th><th>Цена</th><th>Действия</th></tr></thead>
                 <tbody id="menuItemsTable"></tbody>
@@ -39,15 +43,21 @@
 
         <div id="orders" class="tab-content hidden">
             <h2>Заказы</h2>
-            <select id="orderStatusFilter" class="form-select" onchange="fetchOrdersByStatus()">
-                <option value="">Все</option>
-                <option value="ЗАКАЗ_ВЫДАН">Заказ выдан</option>
-                <option value="ЗАКАЗ_ГОТОВИТСЯ">Заказ готовится</option>
-                <option value="ГОТОВ_К_ВЫДАЧЕ">Готов к выдаче</option>
-                <option value="ВРЕМЯ_ВЫДАЧИ_ВЫШЛО">Время выдачи вышло</option>
-            </select>
+
+            <div class="d-flex gap-2 mb-3">
+                <button class="filter-btn active" onclick="fetchOrdersByStatus('', this)">Все</button>
+                <button class="filter-btn" onclick="fetchOrdersByStatus('ЗАКАЗ_ВЫДАН', this)">Заказ выдан</button>
+                <button class="filter-btn" onclick="fetchOrdersByStatus('ЗАКАЗ_ГОТОВИТСЯ', this)">Заказ готовится</button>
+                <button class="filter-btn" onclick="fetchOrdersByStatus('ГОТОВ_К_ВЫДАЧЕ', this)">Готов к выдаче</button>
+                <button class="filter-btn" onclick="fetchOrdersByStatus('ВРЕМЯ_ВЫДАЧИ_ВЫШЛО', this)">Время выдачи вышло</button>
+            </div>
+
             <table class="table table-bordered">
-                <thead><tr><th>ID</th><th>Номер заказа</th><th>Дата создания</th><th>Статус</th></tr></thead>
+                <thead>
+                <tr>
+                    <th>ID</th><th>Номер заказа</th><th>Дата создания</th><th>Статус</th>
+                </tr>
+                </thead>
                 <tbody id="ordersTable"></tbody>
             </table>
         </div>
@@ -87,6 +97,10 @@
             if (tabId === 'products') {
                 fetchMenuItems();
             }
+            
+            if (tabId === 'orders'){
+                fetchOrdersByStatus();
+            }
 
             if (tabId === 'stats') {
                 fetchStats();
@@ -117,33 +131,42 @@
                 .catch(error => console.error('Ошибка загрузки товаров:', error));
         }
 
-        function fetchOrdersByStatus() {
-            let status = document.getElementById('orderStatusFilter').value;
-            let url = status ? `https://bot-techsupport.rightscan.ru:8078/order/by-status?status=${status}` : 'https://bot-techsupport.rightscan.ru:8078/order/all';
+        function fetchOrdersByStatus(status, button) {
+            let url = (status && status !== 'ВСЕ') ?
+                `https://bot-techsupport.rightscan.ru:8078/api/order/by-status?status=${encodeURIComponent(status)}` :
+                'https://bot-techsupport.rightscan.ru:8078/api/order/all';
 
             fetch(url)
                 .then(response => response.json())
                 .then(data => {
                     let tableBody = document.getElementById('ordersTable');
-                    tableBody.innerHTML = '';
-                    data.forEach(order => {
-                        let row = `<tr>
-                            <td>${order.id}</td>
-                            <td>${order.chatId}</td>
-                            <td>
-                                <select class="form-select" onchange="updateOrderStatus(${order.id}, this.value)">
-                                    <option ${order.status === 'ЗАКАЗ_ВЫДАН' ? 'selected' : ''}>ЗАКАЗ_ВЫДАН</option>
-                                    <option ${order.status === 'ЗАКАЗ_ГОТОВИТСЯ' ? 'selected' : ''}>ЗАКАЗ_ГОТОВИТСЯ</option>
-                                    <option ${order.status === 'ГОТОВ_К_ВЫДАЧЕ' ? 'selected' : ''}>ГОТОВ_К_ВЫДАЧЕ</option>
-                                    <option ${order.status === 'ВРЕМЯ_ВЫДАЧИ_ВЫШЛО' ? 'selected' : ''}>ВРЕМЯ_ВЫДАЧИ_ВЫШЛО</option>
-                                </select>
-                            </td>
-                        </tr>`;
-                        tableBody.innerHTML += row;
-                    });
+                    tableBody.innerHTML = ''; // Очищаем таблицу перед загрузкой
+
+                    let rows = data.map(order => `
+                <tr>
+                    <td>${order.id}</td>
+                    <td>${order.chatId}</td>
+                    <td>${order.createdAt || '-'}</td>
+                    <td>
+                        <select class="form-select" onchange="updateOrderStatus(${order.id}, this.value)">
+                            <option value="ЗАКАЗ_ВЫДАН" ${order.status === 'ЗАКАЗ_ВЫДАН' ? 'selected' : ''}>ЗАКАЗ_ВЫДАН</option>
+                            <option value="ЗАКАЗ_ГОТОВИТСЯ" ${order.status === 'ЗАКАЗ_ГОТОВИТСЯ' ? 'selected' : ''}>ЗАКАЗ_ГОТОВИТСЯ</option>
+                            <option value="ГОТОВ_К_ВЫДАЧЕ" ${order.status === 'ГОТОВ_К_ВЫДАЧЕ' ? 'selected' : ''}>ГОТОВ_К_ВЫДАЧЕ</option>
+                            <option value="ВРЕМЯ_ВЫДАЧИ_ВЫШЛО" ${order.status === 'ВРЕМЯ_ВЫДАЧИ_ВЫШЛО' ? 'selected' : ''}>ВРЕМЯ_ВЫДАЧИ_ВЫШЛО</option>
+                        </select>
+                    </td>
+                </tr>
+            `).join('');
+                    tableBody.innerHTML = rows;
+                    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
                 })
                 .catch(error => console.error('Ошибка загрузки заказов:', error));
         }
+
+        // Добавляем обработчик, если фильтр меняется
+        document.getElementById('orderStatusFilter').addEventListener('change', fetchOrdersByStatus);
+
 
         function fetchStats() {
         fetch('https://bot-techsupport.rightscan.ru:8078/api/order/stats/weekly')
@@ -175,17 +198,63 @@
                 .catch(error => console.error('Ошибка при удалении товара:', error));
         }
 
-        function openEditModal(id, name, price) {
+        function loadCategories() {
+            fetch('https://bot-techsupport.rightscan.ru:8078/api/category')
+                .then(response => response.json())
+                .then(categories => {
+                    let select = $('#editCategory');
+                    select.empty();
+                    categories.forEach(category => {
+                        select.append(`<option value="${category.id}">${category.name}</option>`);
+                    });
+                })
+                .catch(error => console.error('Ошибка загрузки категорий:', error));
+        }
+
+        function openEditModal(id, name, category, stock, price) {
+            $('#editId').val(id);
             $('#editName').val(name);
-            $('#editCategory').val(category);
             $('#editStock').val(stock);
             $('#editPrice').val(price);
+
+            loadCategories();
+
+            setTimeout(() => {
+                $('#editCategory').val(category.id);
+            }, 300);
+
             $('#editModal').show();
+        }
+
+        function saveEdit() {
+            let id = $('#editId').val();
+            let updatedItem = {
+                name: $('#editName').val(),
+                category: { id: $('#editCategory').val() },
+                stock: parseInt($('#editStock').val()),
+                price: parseFloat($('#editPrice').val()),
+                available: true
+            };
+
+            fetch(`https://bot-techsupport.rightscan.ru:8078/api/menu/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updatedItem)
+            })
+                .then(response => {
+                    if (!response.ok) throw new Error('Ошибка при обновлении');
+                    return response.json();
+                })
+                .then(data => {
+                    alert('Обновлено успешно!');
+                    closeModal();
+                    location.reload();
+                })
+                .catch(error => console.error('Ошибка обновления:', error));
         }
 
         function closeModal() { $('#editModal').hide(); }
 
-        function saveEdit() { alert('Сохранение...'); closeModal(); }
     </script>
 </body>
 </html>

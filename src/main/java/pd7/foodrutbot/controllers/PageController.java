@@ -1,5 +1,6 @@
 package pd7.foodrutbot.controllers;
 
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +13,7 @@ import pd7.foodrutbot.repositories.CategoryRepository;
 import pd7.foodrutbot.repositories.MenuItemsRepository;
 import pd7.foodrutbot.repositories.OrderItemRepository;
 import pd7.foodrutbot.repositories.OrderListRepository;
+import pd7.foodrutbot.service.CategoryService;
 import pd7.foodrutbot.service.MenuService;
 import pd7.foodrutbot.service.OrderListService;
 import pd7.foodrutbot.service.TelegramBot;
@@ -35,6 +37,9 @@ public class PageController {
     private MenuItemsRepository menuItemsRepository;
 
     @Autowired
+    private CategoryService categoryService;
+
+    @Autowired
     private CategoryRepository categoryRepository;
 
     @Autowired
@@ -46,25 +51,19 @@ public class PageController {
     @Autowired
     private TelegramBot telegramBot;
 
-    //Общие контроллеры
 
-    // Получить все блюдаx
+    /**
+     * Получить все блюда
+     */
     @GetMapping("/menu/all")
     public ResponseEntity<List<MenuItems>> getAllMenuItems() {
         List<MenuItems> availableItems = menuService.getAllMenuItems();
         return ResponseEntity.ok(availableItems);
     }
 
-    // Получить все блюда
-    @GetMapping("/order/all")
-    public ResponseEntity<List<OrderList>> getAllOrders() {
-        List<OrderList> availableItems = orderListService.getAllOrderList();
-        return ResponseEntity.ok(availableItems);
-    }
-
-    //Админские контроллеры
-
-    // Добавить новое блюдо
+    /**
+     * Добавить новое блюдо
+     */
     @PostMapping("/menu")
     public ResponseEntity<?> addMenuItem(@RequestBody MenuItems menuItem) {
         try {
@@ -89,35 +88,62 @@ public class PageController {
         }
     }
 
-
-    // Обновить блюдо по ID
+    /**
+     * Обновить блюдо по ID
+     */
     @PutMapping("/menu/{id}")
     public ResponseEntity<MenuItems> updateMenuItem(@PathVariable Integer id, @RequestBody MenuItems updatedMenuItem) {
         try {
-            MenuItems updatedItem = menuService.updateMenuItem(id, updatedMenuItem);
+            updatedMenuItem.setId(id); // Принудительно задаем ID из URL
+            MenuItems updatedItem = menuService.updateMenuItem(updatedMenuItem);
             return ResponseEntity.ok(updatedItem);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
-
-    // Удалить блюдо по ID
+    /**
+     * Удалить блюдо по ID
+     */
     @DeleteMapping("/menu/{id}")
     public ResponseEntity<Void> deleteMenuItem(@PathVariable Integer id) {
         menuService.deleteMenuItem(id);
         return ResponseEntity.noContent().build();
     }
 
-    // Найти блюдо по ID
+    /**
+     * Найти блюдо по ID
+     */
     @GetMapping("/menu/{id}")
     public ResponseEntity<MenuItems> getMenuItemById(@PathVariable Integer id) {
         MenuItems menuItem = menuService.getMenuItemById(id);
         return ResponseEntity.ok(menuItem);
     }
 
-    // Обновить статус заказа
+    /**
+     * Получить все доступные блюда
+     */
+    @GetMapping("/menu/available")
+    public ResponseEntity<List<MenuItems>> getAvailableMenuItems() {
+        List<MenuItems> availableItems = menuService.getAvailableMenuItems();
+        return ResponseEntity.ok(availableItems);
+    }
+
+    /**
+     * Получить все блюда
+     */
+    @GetMapping("/order/all")
+    public ResponseEntity<List<OrderList>> getAllOrders() {
+        List<OrderList> availableItems = orderListService.getAllOrderList();
+        return ResponseEntity.ok(availableItems);
+    }
+
+    /**
+     * Обновить статус заказа
+     */
     @PatchMapping("/order/{orderId}/status")
     public ResponseEntity<OrderList> updateOrderStatus(@PathVariable Integer orderId, @RequestBody Map<String, String> request) {
         OrderList.OrderStatus newStatus = OrderList.OrderStatus.valueOf(request.get("status"));
@@ -132,27 +158,22 @@ public class PageController {
         return updatedOrder.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
-    // Получить статистику продаж за неделю
+    /**
+     * Получить статистику продаж за неделю
+     */
     @GetMapping("/order/stats/weekly")
     public ResponseEntity<Map<String, Object>> getWeeklyDishSales() {
         Map<String, Object> salesStats = orderListService.getWeeklyDishSales();
         return ResponseEntity.ok(salesStats);
     }
 
-    // Удалить заказ
+    /**
+     * Удалить заказ
+     */
     @DeleteMapping("/order/{orderId}")
     public ResponseEntity<Void> deleteOrder(@PathVariable Integer orderId) {
         orderListService.deleteOrder(orderId);
         return ResponseEntity.noContent().build();
-    }
-
-    //Клиентские контроллеры
-
-    // Получить все доступные блюда
-    @GetMapping("/menu/available")
-    public ResponseEntity<List<MenuItems>> getAvailableMenuItems() {
-        List<MenuItems> availableItems = menuService.getAvailableMenuItems();
-        return ResponseEntity.ok(availableItems);
     }
 
     /**
@@ -256,14 +277,18 @@ public class PageController {
         return ResponseEntity.ok(order);
     }
 
-    // Получить заказ по номеру
+    /**
+     * Получить заказ по номеру
+     */
     @GetMapping("/order/{orderNumber}")
     public ResponseEntity<OrderList> getOrderByNumber(@PathVariable String orderNumber) {
         Optional<OrderList> order = orderListService.getOrderByNumber(orderNumber);
         return order.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
-    //Изменение статуса заказа
+    /**
+     * Изменение статуса заказа
+     */
     @PutMapping("/order/{id}/status")
     public ResponseEntity<String> updateOrderStatus(@PathVariable Integer id, @RequestParam OrderList.OrderStatus status) {
         Optional<OrderList> orderOptional = orderListRepository.findById(id);
@@ -277,9 +302,21 @@ public class PageController {
         }
     }
 
+    /**
+     * Получить список заказов по статусу
+     */
     @GetMapping("order/by-status")
     public ResponseEntity<List<OrderList>> getOrdersByStatus(@RequestParam OrderList.OrderStatus status) {
         List<OrderList> orders = orderListRepository.findByStatus(status);
         return ResponseEntity.ok(orders);
+    }
+
+    /**
+     * Получить список категорий
+     */
+    @GetMapping("category")
+    public ResponseEntity<List<Category>> getAllCategories() {
+        List<Category> categories = categoryService.findAll();
+        return ResponseEntity.ok(categories);
     }
 }
