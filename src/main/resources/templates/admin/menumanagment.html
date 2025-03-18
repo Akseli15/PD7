@@ -157,6 +157,8 @@
     <ul class="nav flex-column">
         <li class="nav-item"><a href="#" class="nav-link text-white" onclick="showTab('products')"
                                 style="font-size: 21px; text-align: center; font-weight: 200">Позиции меню</a></li>
+        <li class="nav-item"><a href="#" class="nav-link text-white" onclick="showTab('category')"
+                                style="font-size: 21px; text-align: center; font-weight: 200">Категории</a></li>
         <li class="nav-item"><a href="#" class="nav-link text-white" onclick="showTab('orders')"
                                 style="font-size: 21px; text-align: center; font-weight: 200">Заказы</a></li>
         <li class="nav-item"><a href="#" class="nav-link text-white" onclick="showTab('stats')"
@@ -165,11 +167,11 @@
 </div>
 
 <div id="content">
+
     <div id="products" class="tab-content">
         <h2>Позиции меню</h2>
         <div style="margin-bottom: 8px">
             <button class="filter-btn" onclick="openAddItemModal()">Добавить позицию</button>
-            <button class="filter-btn" onclick="openAddCategoryModal()">Добавить категорию</button>
         </div>
         <table class="table table-bordered">
             <thead>
@@ -183,6 +185,24 @@
             </tr>
             </thead>
             <tbody id="menuItemsTable"></tbody>
+        </table>
+    </div>
+
+    <div id="category" class="tab-content hidden">
+        <h2>Категории</h2>
+
+        <div style="margin-bottom: 8px">
+            <button class="filter-btn" onclick="openAddCategoryModal()">Добавить категорию</button>
+        </div>
+        <table class="table table-bordered">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Наименование</th>
+                <th>Действия</th>
+            </tr>
+            </thead>
+            <tbody id="categoriesTable"></tbody>
         </table>
     </div>
 
@@ -232,6 +252,7 @@
         <label>Категория:<select class="editSelect" id="addCategory"></select></label>
         <label>Количество: <input class="editInput"type="number" id="addStock"></label>
         <label>Цена: <input class="editInput" type="number" id="addPrice"></label>
+        <label>Ссылка на изображение: <input class="editInput"type="text" id="addImageUrl"></label>
         <button onclick="saveAdd()" class="btn editbtn btn-success">Сохранить</button>
         <button onclick="closeAddModal()" class="btn editbtn btn-secondary">Закрыть</button>
     </div>
@@ -245,6 +266,7 @@
         <label>Категория:<select class="editSelect" id="editCategory"></select></label>
         <label>Количество: <input class="editInput" type="number" id="editStock"></label>
         <label>Цена: <input class="editInput" type="number" id="editPrice"></label>
+        <label>Ссылка на изображение: <input class="editInput"type="text" id="editImageUrl"></label>
         <button onclick="saveEdit()" class="editbtn btn btn-success">Сохранить</button>
         <button onclick="closeModal()" class="editbtn btn btn-secondary">Закрыть</button>
     </div>
@@ -259,6 +281,23 @@
     </div>
 </div>
 
+<!-- Модальное окно для отображения деталей заказа -->
+<div class="modal fade" id="orderModal" tabindex="-1" aria-labelledby="orderModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="orderModalLabel"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="modalContent">
+                <!-- Здесь будет отображаться информация о заказе -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script>
     fetchMenuItems();
@@ -277,6 +316,11 @@
 
         if (tabId === 'stats') {
             fetchStats();
+        }
+
+        if (tabId === 'category'){
+
+            fetchMenuCategories();
         }
     }
 
@@ -305,6 +349,27 @@
             .catch(error => console.error('Ошибка загрузки товаров:', error));
     }
 
+    function fetchMenuCategories() {
+        fetch('https://bot-techsupport.rightscan.ru:8078/api/category')
+            .then(response => response.json())
+            .then(data => {
+                let tableBody = document.getElementById('categoriesTable');
+                tableBody.innerHTML = '';
+                data.forEach(category => {
+                    let row = `<tr>
+    <td>${category.id}</td>
+    <td>${category.name}</td>
+    <td>
+        <button class="btn btn-danger" onclick="deleteCategory(${category.id})">Удалить</button>
+    </td>
+</tr>`;
+
+                    tableBody.innerHTML += row;
+                });
+            })
+            .catch(error => console.error('Ошибка загрузки товаров:', error));
+    }
+
     function fetchOrdersByStatus(status, button) {
         let url = (status && status !== 'ВСЕ') ?
             `https://bot-techsupport.rightscan.ru:8078/api/order/by-status?status=${encodeURIComponent(status)}` :
@@ -319,7 +384,7 @@
                 let rows = data.map(order => `
                 <tr>
                     <td>${order.id}</td>
-                    <td>${order.chatId}</td>
+                    <td>${order.orderNumber}</td>
                     <td>${order.createdAt || '-'}</td>
                     <td>
                         <select class="form-select" onchange="updateOrderStatus(${order.id}, this.value)">
@@ -329,6 +394,7 @@
                             <option value="ВРЕМЯ_ВЫДАЧИ_ВЫШЛО" ${order.status === 'ВРЕМЯ_ВЫДАЧИ_ВЫШЛО' ? 'selected' : ''}>ВРЕМЯ_ВЫДАЧИ_ВЫШЛО</option>
                         </select>
                     </td>
+                    <td><button class="btn btn-primary" onclick="openOrderDetails(${order.id}, '${order.orderNumber}')">Детали</button></td>
                 </tr>
             `).join('');
                 tableBody.innerHTML = rows;
@@ -337,6 +403,53 @@
             })
             .catch(error => console.error('Ошибка загрузки заказов:', error));
     }
+
+    function openOrderDetails(orderId, orderNumber) {
+        fetch(`https://bot-techsupport.rightscan.ru:8078/api/${orderId}/items`)
+            .then(response => response.json())
+            .then(orderDetailsArray => {
+                if (!Array.isArray(orderDetailsArray)) {
+                    throw new Error("Некорректный формат ответа: ожидался массив");
+                }
+
+                // Проверяем, есть ли данные в массиве
+                if (orderDetailsArray.length === 0) {
+                    throw new Error("Заказ пуст");
+                }
+
+                // Получаем ID заказа (берём из первого элемента, если массив)
+                const orderId = orderDetailsArray[0].id || "-";
+
+                // Строим список товаров
+                const itemsList = orderDetailsArray.map(item => `
+                <div class="item">
+                    <img src="${item.menuItem.imageUrl}" alt="${item.menuItem.name}"
+                        style="width: 80px; height: 80px; object-fit: cover; margin-right: 10px;">
+                    <span><strong>${item.menuItem.name}</strong></span>
+                    <span>(${item.quantity} шт.)</span>
+                    <span>₽${item.price.toFixed(2)}</span>
+                </div>
+            `).join('');
+
+                // Рассчитываем итоговую сумму
+                const totalPrice = orderDetailsArray.reduce((sum, item) => sum + item.price, 0).toFixed(2);
+
+                // Заполняем модальное окно
+                const modalContent = document.getElementById('modalContent');
+                modalContent.innerHTML = `
+                <h4>Детали заказа ${orderNumber}</h4>
+                <div>${itemsList}</div>
+                <hr>
+                <p><strong>Итоговая сумма:</strong> ₽${totalPrice}</p>
+            `;
+
+                // Открываем модальное окно
+                const modal = new bootstrap.Modal(document.getElementById('orderModal'));
+                modal.show();
+            })
+            .catch(error => console.error('Ошибка получения деталей заказа:', error));
+    }
+
 
     function updateOrderStatus(orderId, newStatus) {
         fetch(`https://bot-techsupport.rightscan.ru:8078/api/order/${orderId}/status?status=${newStatus}`, {
@@ -384,6 +497,16 @@
             .catch(error => console.error('Ошибка при удалении товара:', error));
     }
 
+    function deleteCategory(categoryId) {
+        fetch(`https://bot-techsupport.rightscan.ru:8078/api/category/${categoryId}`, {method: 'DELETE'})
+            .then(response => {
+                if (response.ok) {
+                    fetchMenuCategories();
+                }
+            })
+            .catch(error => console.error('Ошибка при удалении категории:', error));
+    }
+
     function loadCategories() {
         fetch('https://bot-techsupport.rightscan.ru:8078/api/category')
             .then(response => response.json())
@@ -404,11 +527,12 @@
     }
 
 
-    function openEditModal(id, name, category, stock, price) {
+    function openEditModal(id, name, category, stock, price, imageUrl) {
         $('#editId').val(id);
         $('#editName').val(name);
         $('#editStock').val(stock);
         $('#editPrice').val(price);
+        $('#editImageUrl').val(imageUrl);
 
         loadCategories();
 
@@ -426,6 +550,7 @@
             category: {id: $('#editCategory').val()},
             stock: parseInt($('#editStock').val()),
             price: parseFloat($('#editPrice').val()),
+            imageUrl: $('#editImageUrl').val(),
             available: true
         };
 
@@ -454,6 +579,7 @@
         $('#editCategory').val('')
         $('#addStock').val('');
         $('#addPrice').val('');
+        $('#addImageUrl').val('');
 
         loadCategories();
 
@@ -509,6 +635,7 @@
             category: { id: $('#addCategory').val() },
             stock: parseInt($('#addStock').val()),
             price: parseFloat($('#addPrice').val()),
+            imageUrl: $('#addImageUrl').val(),
             available: true
         };
 

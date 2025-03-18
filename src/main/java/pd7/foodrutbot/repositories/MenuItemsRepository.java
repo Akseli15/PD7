@@ -2,6 +2,7 @@ package pd7.foodrutbot.repositories;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+import pd7.foodrutbot.entities.Category;
 import pd7.foodrutbot.entities.MenuItems;
 
 import java.util.List;
@@ -14,4 +15,6 @@ public interface MenuItemsRepository extends JpaRepository<MenuItems, Integer> {
 
     // Поиск блюд по названию (можно частично)
     List<MenuItems> findByNameContainingIgnoreCase(String name);
+
+    List<MenuItems> findMenuItemsByCategory(Category category);
 }

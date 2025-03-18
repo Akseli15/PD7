@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import pd7.foodrutbot.entities.Category;
 import pd7.foodrutbot.entities.MenuItems;
 import pd7.foodrutbot.entities.OrderItem;
@@ -86,6 +87,17 @@ public class PageController {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Произошла ошибка при добавлении блюда");
         }
+    }
+
+    /**
+     * Фильтр блюд по категориям
+     */
+    @GetMapping("menu/by-category")
+    public ResponseEntity<List<MenuItems>> getMenuItemsByCategory(@RequestParam Integer categoryId) {
+
+        Category category = categoryRepository.findById(categoryId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Категория не найдена"));
+        List<MenuItems> menuItems = menuItemsRepository.findMenuItemsByCategory(category);
+        return ResponseEntity.ok(menuItems);
     }
 
     /**
