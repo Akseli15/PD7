@@ -145,6 +145,29 @@ public class PageController {
     }
 
     /**
+     * Обновление количества позиций меню
+     */
+    @PostMapping("/menu/update")
+    public ResponseEntity<List<OrderItem>> updateMenuItems(@PathVariable Integer orderId) {
+        Optional<OrderList> orderOpt = orderListRepository.findById(orderId);
+
+        if(orderOpt.isEmpty()) return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+
+        List<OrderItem> orderItems = orderOpt.get().getItems();
+
+        for (OrderItem orderItem: orderItems){
+            MenuItems menuItems = orderItem.getMenuItem();
+            int newStock = menuItems.getStock() - orderItem.getQuantity();
+
+            if (newStock<0) return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Collections.singletonList(orderItem));
+
+            menuItems.setStock(newStock);
+            menuItemsRepository.save(menuItems);
+        }
+         return ResponseEntity.ok(orderItems);
+    }
+
+    /**
      * Получить все блюда
      */
     @GetMapping("/order/all")
