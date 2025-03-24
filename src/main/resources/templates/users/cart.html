@@ -24,7 +24,6 @@
 
     <footer class="footer">
         <a class="panelbutton" id="menuItemsButton"><span class="custom-image"><img src="../images/food.svg" alt="food"></span></a>
-        <a class="panelbutton" id="favoriteItemsButton"><span class="custom-image"><img src="../images/favorites.svg" alt="favorites"></span></a>
         <a class="panelbutton" id="cartButton"><span class="custom-image"><img src="../images/cart_active.svg" alt="cart"></span></a>
     </footer>
 
@@ -33,7 +32,6 @@
         var chatId = new URLSearchParams(window.location.search).get('chatId');
 
         document.getElementById('menuItemsButton').href = `https://bot-techsupport.rightscan.ru/foodroot/users/menulist.html?chatId=${chatId}`;
-        document.getElementById('favoriteItemsButton').href = `https://bot-techsupport.rightscan.ru/foodroot/users/favorites.html?chatId=${chatId}`;
         document.getElementById('cartButton').href = `https://bot-techsupport.rightscan.ru/foodroot/users/cart.html?chatId=${chatId}`;
         // Функция для загрузки товаров в корзину
         async function loadCartItems() {
